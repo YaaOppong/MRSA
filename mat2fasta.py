@@ -8,7 +8,7 @@ def readmat(mat):
 	m=pd.read_csv(mat, delimiter=' ')
 	return(m)
 
-#function to read nucmer file of additional genome##############################
+#function to read nucmer file of additional genome and store snps and their pos#
 def readnucmer(nucmersnps):
 	m=pd.read_csv(nucmersnps, delimiter='\t')
 	m=m.iloc[:,[0,2]]
