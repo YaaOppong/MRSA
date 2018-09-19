@@ -22,12 +22,12 @@ def unionpos(mat, nucmersnps):
 	union=sorted(union)
 	return(union)
 
-##iterate unionpos over multiple additional genomes (snps only)#################
-#def iterateunionpos(mat, additional_snps):
-#	for additional_snp in additional_snps:
-#		additional_snp=readnucmer(additional_snp)
-#		union=unionpos(mat, additional_snp)
-#	return(union)
+#iterate unionpos over multiple additional genomes (snps only)#################
+def iterateunionpos(mat, additional_snps):
+	for additional_snp in additional_snps:
+		additional_snp=readnucmer(additional_snp)
+		union=unionpos(mat, additional_snp)
+	return(union)
 
 #function to generate new IUPAC row for monomorphic snps########################
 def lookupnewrowIUPAC(mat, reference, pos):
@@ -79,19 +79,45 @@ def unionposmatBIN(mat, reference, additionals_snps):
 	mat=mat.sort(mat['POS'])
 	return(mat)
 
-#functions to add additional references to IUPAC matrix#########################
-def addadditionalsIUPAC(mat, additional_snps):
+#functions to add additional snsps to new iupac and add new IUPAC to matrix as new column#########################
+def additionalsIUPAC(mat, additional_snps):
+	for additional_snp in additional_snps:
+		additional_snp=readnucmer(additional_snp)
+		union=unionpos(mat, additional_snp)
+		npos=additional_snp[,0]
+		newpos=union.difference(npos)
+		for pos in newpos:
+			ref=mat[pos, 'REF']
+			newrow=[pos, ref ]
+			newdata=newdata.append(newrow)
+		additional_snp=additional_snp.concat(pd.DataFrame(newdata))
+		additional_snp=additional_snp.sort(additional_snp[,0])
+		mat=mat.concat(pd.DataFrame(additional_snp[,1]), axis=1)
+	return(mat)
+
+
+#functions to add additional snsps to new iupac and add new IUPAC to matrix as new column#########################
+def additionalsBIN(mat, additional_snps):
 	for additional_snp in additional_snps:
 		additional_snp=readnucmer(additional_snp)
 		union=unionpos(mat, additional_snp)
 		npos=additional_snp[0,]
 		newpos=union.difference(npos)
+		newcol=[]
+		for pos in additional_snp:
+			ref=mat[pos, 'REF']
+			if additional_snp[pos,1]==ref:
+				newcol=newcol.append(0)
+			else:
+				newcol=newcol.append(1)
+		additional_snp=additional_snp.concat(pd.DataFrame(newcol), axis=1)
 		for pos in newpos:
 			ref=mat[pos, 'REF']
-			newrow=pd.DataFrame([pos, ref ])	
-			additional_snp=additional_snp.append(newrow)
+			newrow=[pos,ref,0]
+			newdata=newdata.append(newrow)
+		additional_snp=additional_snp.concat(pd.DataFrame(newdata))
 		additional_snp=additional_snp.sort(additional_snp[,0])
-		mat=mat.appendcol(additional_snp[,1])
+		mat=mat.concat(pd.DataFrame(additional_snp[,2]), axis=1)
 	return(mat)
 
 #functions to add additional references to BINARY matrix########################
@@ -100,22 +126,22 @@ def addadditionalsIUPAC(mat, additional_snps):
 def matfasta(mat, out):
 	outfasta=open(out, 'w')
 	for col in cols(mat)[3:]:
-		a=as.fasta(mat[col])
+		a=mat[col]
 		SeqIO.write(fasta, outfasta, "fasta")
 	outfasta.close()
 
 ################################################################################
 ###arg input##
 parser=argparse.ArgumentParser(description='')
-parser.add_argument('out_type',help='output type required; -f (fasta) -b \
+parser.add_argument('--out_type',help='output type required; -f (fasta) -b \
 	(matbin) -i (matiupac)')
-parser.add_argument('mat', help="Variant matrix in IUPAC format (with 4 d\
+parser.add_argument('--mat', help="Variant matrix in IUPAC format (with 4 d\
 	escriptor columns;'POS' 'REF' 'AL' 'TYPE')")
-parser.add_argument('matbin', help="Binary variant matrix (with 4 descriptor \
+parser.add_argument('--matbin', help="Binary variant matrix (with 4 descriptor \
 	columns;'POS' 'REF' 'AL' 'TYPE')")
-parser.add_argument('additional_snps', help='List of SNP only nucmer files of \
-	additional genomes generated using show-snps')
-parser.add_argument('out_prefix', help='Prefix for output files')
+parser.add_argument('--out_prefix', help='Prefix for output files')
+parser.add_argument('--additional_snps', help='List of SNP only nucmer files of \
+	additional genomes generated using show-snps', nargs='+')
 args=parser.parse_args()
 
 ## pipeline execution###########################################################
