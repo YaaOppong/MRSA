@@ -84,15 +84,15 @@ def additionalsIUPAC(mat, additional_snps):
 	for additional_snp in additional_snps:
 		additional_snp=readnucmer(additional_snp)
 		union=unionpos(mat, additional_snp)
-		npos=additional_snp[,0]
+		npos=additional_snp.iloc[:,0]
 		newpos=union.difference(npos)
 		for pos in newpos:
 			ref=mat[pos, 'REF']
 			newrow=[pos, ref ]
 			newdata=newdata.append(newrow)
 		additional_snp=additional_snp.concat(pd.DataFrame(newdata))
-		additional_snp=additional_snp.sort(additional_snp[,0])
-		mat=mat.concat(pd.DataFrame(additional_snp[,1]), axis=1)
+		additional_snp=additional_snp.sort(additional_snp.iloc[:,0])
+		mat=mat.concat(pd.DataFrame(additional_snp.iloc[:,1]), axis=1)
 	return(mat)
 
 
@@ -116,8 +116,8 @@ def additionalsBIN(mat, additional_snps):
 			newrow=[pos,ref,0]
 			newdata=newdata.append(newrow)
 		additional_snp=additional_snp.concat(pd.DataFrame(newdata))
-		additional_snp=additional_snp.sort(additional_snp[,0])
-		mat=mat.concat(pd.DataFrame(additional_snp[,2]), axis=1)
+		additional_snp=additional_snp.sort(additional_snp.iloc[:,0])
+		mat=mat.concat(pd.DataFrame(additional_snp.iloc[:,2]), axis=1)
 	return(mat)
 
 #functions to add additional references to BINARY matrix########################
@@ -125,7 +125,7 @@ def additionalsBIN(mat, additional_snps):
 #generate multifasta from IUPAC matrix##########################################
 def matfasta(mat, out):
 	outfasta=open(out, 'w')
-	for col in cols(mat)[3:]:
+	for col in mat.columns()[3:]:
 		a=mat[col]
 		SeqIO.write(fasta, outfasta, "fasta")
 	outfasta.close()
@@ -142,12 +142,13 @@ parser.add_argument('--matbin', help="Binary variant matrix (with 4 descriptor \
 parser.add_argument('--out_prefix', help='Prefix for output files')
 parser.add_argument('--additional_snps', help='List of SNP only nucmer files of \
 	additional genomes generated using show-snps', nargs='+')
+parser.add_argument('--reference', help='Reference fasta file')
 args=parser.parse_args()
 
 ## pipeline execution###########################################################
-outmat=unionposmat(args.mat, args.additional_snps)
-outmatbin=unionposmatbin(args.matbin, args.additional_snps)
-matfasta(args.outmat, outfasta)
+outmat=unionposmatIUPAC(args.mat, args.reference, args.additional_snps)
+outmatbin=unionposmatBIN(args.matbin, args.reference, args.additional_snps)
+matfasta(args.outmat, args.out_prefix + '.fasta')
 
 a=open(args.out_prefix + 'mat', 'w')
 b=open(args.out_prefix + 'mat.bin', 'w')
