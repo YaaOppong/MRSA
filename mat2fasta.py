@@ -16,22 +16,23 @@ def readnucmer(nucmersnps):
 
 #function to return union of postions from IUPAC matrix and additional genomes####
 def unionpos(mat, nucmersnps):
-	matpos=mat.ix[:,'POS'].to_dict()
-	nucmersnpspos=nucmersnps.iloc[:,0].to_dict()
-	union=set().union(matpos,nucmersnpspos)
-	union=sorted(union)
+	matpos=mat.ix[:,'POS'].tolist()
+	nucmersnpspos=nucmersnps.iloc[:,0].tolist()
+	union=matpos+nucmersnpspos
+	union=sorted(set(union))
 	return(union)
 
 #iterate unionpos over multiple additional genomes (snps only)####################
 def iterateunionpos(mat, additional_snps):
+	union=[]
 	for additional_snp in additional_snps:
 		additional_snp=readnucmer(additional_snp)
-		union=unionpos(mat, additional_snp)
+		union=union+unionpos(mat, additional_snp)
+	union=sorted(set(union))
 	return(union)
 
 #function to generate new IUPAC row for monomorphic snps##########################
 def lookupnewrowIUPAC(mat, reference, pos):
-	#reference=SeqIO.read(reference, 'fasta')
 	ref=reference.seq[pos]
 	alt='NaN'
 	newrow=[pos, ref, alt, 'SNP'] + [ref] * (len(mat.columns) - 4)
@@ -41,7 +42,6 @@ def lookupnewrowIUPAC(mat, reference, pos):
 
 #function to generate new binary row for monomorphic snps#########################
 def lookupnewrowBIN(mat, reference, pos):
-	reference=Bio.SeqIO.read(reference, 'fasta')
 	ref=reference.seq[pos]
 	alt='NaN'
 	newrow=[pos, ref, alt, 'SNP'] + [0] * (len(mat.columns) - 4)
@@ -50,17 +50,15 @@ def lookupnewrowBIN(mat, reference, pos):
 	return(newrow)
 
 #function to return IUPAC matrix adding new positions#############################
-def unionposmatIUPAC(mat, reference, additional_snps):
+def unionposmatIUPAC(mat, reference, additionals_snps):
 	mat=readmat(mat)
 	reference=Bio.SeqIO.read(reference, 'fasta')
-	#union=iterateunionpos(mat, additionals_snps)
-	additionals_snps=readnucmer(additionals_snps)
-	unionp=unionpos(mat, additionals_snps)
+	unionp=iterateunionpos(mat, additionals_snps)
 	mpos=mat['POS']
 	newpos=set(unionp).difference(set(mpos))
 	for pos in newpos:
 		newrow=lookupnewrowIUPAC(mat, reference, pos)
-		mat=mat.append(newrow)
+		mat=pd.concat([mat,newrow])
 	mat=mat.sort(mat['POS'])
 	return(mat)
 
@@ -68,24 +66,26 @@ def unionposmatIUPAC(mat, reference, additional_snps):
 def unionposmatBIN(mat, reference, additionals_snps):
 	mat=readmat(mat)
 	reference=Bio.SeqIO.read(reference, 'fasta')
-	#union=iterateunionpos(mat, additionals_snps)
-	additionals_snps=readnucmer(additionals_snps)
-	unionp=unionpos(mat, additionals_snps)
+	unionp=iterateunionpos(mat, additionals_snps)
 	mpos=mat['POS']
 	newpos=set(unionp).difference(set(mpos))
+	temp=open('temp.txt', 'w')
+	mat.to_csv(temp, mode='w', index=False)
 	for pos in newpos:
 		newrow=lookupnewrowBIN(mat, reference, pos)
-		mat=mat.append(newrow)
-	mat=mat.sort(mat['POS'])
+		newrow.to_csv(temp, mode='a', header=False, index=False)
+	temp.close()
+	mat=pd.read_csv('temp.txt', low_memory=False)
+	mat=mat.sort_values(mat['POS'], axis=1)
 	return(mat)
 
 #functions to add snps to iupac and add new IUPAC to matrix as new column##########
 def additionalsIUPAC(mat, additional_snps):
 	for additional_snp in additional_snps:
 		additional_snp=readnucmer(additional_snp)
-		union=unionpos(mat, additional_snp)
+		unionp=unionpos(mat, additional_snp)
 		npos=additional_snp.iloc[:,0]
-		newpos=union.difference(npos)
+		newpos=unionp.difference(npos)
 		for pos in newpos:
 			ref=mat[pos, 'REF']
 			newrow=[pos, ref ]
@@ -129,6 +129,7 @@ def matfasta(mat, out):
 		a=mat[col]
 		Bio.SeqIO.write(fasta, outfasta, "fasta")
 	outfasta.close()
+
 
 ###################################################################################
 ###arg input##
