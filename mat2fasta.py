@@ -10,7 +10,7 @@ def readmat(mat):
 
 #function to read nucmer file of additional genome and store snps and their pos###
 def readnucmer(nucmersnps):
-	m=pd.read_csv(nucmersnps, delimiter='\t')
+	m=pd.read_csv(nucmersnps, delimiter='\t', header=[0,1,2,3,4,5,6,7,8,9])
 	m=m.iloc[:,[0,2]]
 	return(m)
 
@@ -104,22 +104,21 @@ def additionalsBIN(mat, additional_snps):
 		npos=additional_snp.iloc[:,0]
 		newpos=set(mpos).difference(set(npos))
 		newcol=[]
-		matdict=mat.loc[:,['POS','REF']].to_dict()
-		for pos in additional_snp:
-			posindex=which
-			ref=mat.loc[pos, 'REF']
-			if additional_snp[pos,1]==ref:
-				newcol=newcol.append(0)
-			else:
-				newcol=newcol.append(1)
-		additional_snp=additional_snp.concat(pd.DataFrame(newcol), axis=1)
+		mydict={}
+		for i in  range(len(mat['POS'])):
+	     	mydict[mat.loc[i, 'POS']]= mat.loc[i, 'REF']
+		for pos in additional_snp.iloc[:,0]:
+			newcol.append(1)
+		additional_snp=pd.concat([additional_snp, pd.DataFrame(newcol)], axis=1)
+		newdata=[]
 		for pos in newpos:
-			ref=mat[pos, 'REF']
+			ref=mydict[pos]
 			newrow=[pos,ref,0]
-			newdata=newdata.append(newrow)
-		additional_snp=additional_snp.concat(pd.DataFrame(newdata))
-		additional_snp=additional_snp.sort(additional_snp.iloc[:,0])
-		mat=mat.concat(pd.DataFrame(additional_snp.iloc[:,2]), axis=1)
+			newdata.append(newrow)
+		additional_snp=pd.concat([additional_snp, pd.DataFrame(newdata)])
+
+		additional_snp=additional_snp.sort_values(by=[0])
+		mat=pd.concat([mat, pd.DataFrame(additional_snp.iloc[:,2])], axis=1)
 	return(mat)
 
 #functions to add additional references to BINARY matrix############################
