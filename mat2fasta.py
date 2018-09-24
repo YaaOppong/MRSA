@@ -76,7 +76,7 @@ def unionposmatBIN(mat, reference, additionals_snps):
 		newrow.to_csv(temp, mode='a', header=False, index=False)
 	temp.close()
 	mat=pd.read_csv('temp.txt', low_memory=False)
-	mat=mat.sort_values(mat['POS'], axis=1)
+	mat=mat.sort_values(by=['POS'])
 	return(mat)
 
 #functions to add snps to iupac and add new IUPAC to matrix as new column##########
@@ -100,12 +100,14 @@ def additionalsIUPAC(mat, additional_snps):
 def additionalsBIN(mat, additional_snps):
 	for additional_snp in additional_snps:
 		additional_snp=readnucmer(additional_snp)
-		union=unionpos(mat, additional_snp)
-		npos=additional_snp[0,]
-		newpos=union.difference(npos)
+		mpos=mat['POS']
+		npos=additional_snp.iloc[:,0]
+		newpos=set(mpos).difference(set(npos))
 		newcol=[]
+		matdict=mat.loc[:,['POS','REF']].to_dict()
 		for pos in additional_snp:
-			ref=mat[pos, 'REF']
+			posindex=which
+			ref=mat.loc[pos, 'REF']
 			if additional_snp[pos,1]==ref:
 				newcol=newcol.append(0)
 			else:
