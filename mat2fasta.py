@@ -8,10 +8,10 @@ def readmat(mat):
 	m=pd.read_csv(mat, delimiter=' ')
 	return(m)
 
-#function to read nucmer file of additional genome and store snps and their pos###
-def readnucmer(nucmersnps):
-	m=pd.read_csv(nucmersnps, delimiter='\t', header=[0,1,2,3,4,5,6,7,8,9])
-	m=m.iloc[:,[0,2]]
+#function to read file of additional genome- refpos, ref, alt#####################
+def readsnps(snps):
+	m=pd.read_csv(snps, delimiter=' ')
+	m=m.loc[:,['refpos','alt']]
 	return(m)
 
 #function to return union of postions from IUPAC matrix and additional genomes####
@@ -82,46 +82,63 @@ def unionposmatBIN(mat, reference, additionals_snps):
 #functions to add snps to iupac and add new IUPAC to matrix as new column##########
 def additionalsIUPAC(mat, additional_snps):
 	for additional_snp in additional_snps:
-		additional_snp=readnucmer(additional_snp)
-		unionp=unionpos(mat, additional_snp)
-		npos=additional_snp.iloc[:,0]
-		newpos=unionp.difference(npos)
-		for pos in newpos:
-			ref=mat[pos, 'REF']
-			newrow=[pos, ref ]
-			newdata=newdata.append(newrow)
-		additional_snp=additional_snp.concat(pd.DataFrame(newdata))
-		additional_snp=additional_snp.sort(additional_snp.iloc[:,0])
-		mat=mat.concat(pd.DataFrame(additional_snp.iloc[:,1]), axis=1)
-	return(mat)
-
-
-#functions to add snps to new iupac and add new IUPAC to matrix as new column######
-def additionalsBIN(mat, additional_snps):
-	for additional_snp in additional_snps:
-		additional_snp=readnucmer(additional_snp)
+		name=additional_snp
+		additional_snp=readsnps(additional_snp)
 		mpos=mat['POS']
 		npos=additional_snp.iloc[:,0]
 		newpos=set(mpos).difference(set(npos))
-		newcol=[]
 		mydict={}
 		for i in  range(len(mat['POS'])):
-	     	mydict[mat.loc[i, 'POS']]= mat.loc[i, 'REF']
+			mydict[mat.loc[i, 'POS']]= mat.loc[i, 'REF']
+		newdata=[]
+		for pos in newpos:
+			ref=mydict[pos]
+			newrow=[pos,ref]
+			newdata.append(newrow)
+		newdata=pd.DataFrame(newdata)
+		newdata.columns=['refpos','alt']
+		additional_snp=pd.concat([additional_snp, newdata], axis=0)
+		additional_snp=additional_snp.sort_values(by=['refpos'])
+		newmatcol=pd.DataFrame(additional_snp.iloc[:,1])
+		newmatcol.columns=[name]
+
+		#check mat['POS']==additional_SNPS['refpos']### STILL TO DO###
+		mat=pd.concat([mat, newmatcol], axis=1)
+	return(mat)
+
+
+#functions to add additional references to BINARY matrix############################
+def additionalsBIN(mat, additional_snps):
+	for additional_snp in additional_snps:
+		name=additional_snp
+		additional_snp=readsnps(additional_snp)
+		mpos=mat['POS']
+		npos=additional_snp.iloc[:,0]
+		newpos=set(mpos).difference(set(npos))
+		mydict={}
+		for i in  range(len(mat['POS'])):
+			mydict[mat.loc[i, 'POS']]= mat.loc[i, 'REF']
+		newcol=[]
 		for pos in additional_snp.iloc[:,0]:
 			newcol.append(1)
 		additional_snp=pd.concat([additional_snp, pd.DataFrame(newcol)], axis=1)
+		additional_snp.columns=['refpos','alt', 'bin' ]
 		newdata=[]
 		for pos in newpos:
 			ref=mydict[pos]
 			newrow=[pos,ref,0]
 			newdata.append(newrow)
-		additional_snp=pd.concat([additional_snp, pd.DataFrame(newdata)])
-
-		additional_snp=additional_snp.sort_values(by=[0])
-		mat=pd.concat([mat, pd.DataFrame(additional_snp.iloc[:,2])], axis=1)
+		newdata=pd.DataFrame(newdata)
+		newdata.columns=['refpos','alt', 'bin' ]
+		additional_snp=pd.concat([additional_snp, newdata], axis=0)
+		additional_snp=additional_snp.sort_values(by=['refpos'])
+		newmatcol=pd.DataFrame(additional_snp.iloc[:,2])
+		newmatcol.columns=[name]
+		
+		#check mat['POS']==additional_SNPS['refpos']### STILL TO DO####
+		mat=pd.concat([mat, newmatcol], axis=1)
 	return(mat)
 
-#functions to add additional references to BINARY matrix############################
 
 #generate multifasta from IUPAC matrix##############################################
 def matfasta(mat, out):
@@ -156,6 +173,7 @@ if args.out_type=='i':
 
 if args.out_type=='b':
 	outmatbin=unionposmatBIN(args.matbin, args.reference, args.additional_snps)
+	additionals_BIN
 	b=open(args.out_prefix + 'mat.bin', 'w')
 	b.write(outmatbin)
 	b.close()
