@@ -26,7 +26,7 @@ def unionpos(mat, nucmersnps):
 def iterateunionpos(mat, additional_snps):
 	union=[]
 	for additional_snp in additional_snps:
-		additional_snp=readnucmer(additional_snp)
+		additional_snp=readsnps(additional_snp)
 		union=union+unionpos(mat, additional_snp)
 	union=sorted(set(union))
 	return(union)
@@ -56,11 +56,16 @@ def unionposmatIUPAC(mat, reference, additionals_snps):
 	unionp=iterateunionpos(mat, additionals_snps)
 	mpos=mat['POS']
 	newpos=set(unionp).difference(set(mpos))
+	temp=open('temp.txt', 'w')
+	mat.to_csv(temp, mode='w', index=False)
 	for pos in newpos:
-		newrow=lookupnewrowIUPAC(mat, reference, pos)
-		mat=pd.concat([mat,newrow])
-	mat=mat.sort(mat['POS'])
+		newrow=lookupnewrowBIN(mat, reference, pos)
+		newrow.to_csv(temp, mode='a', header=False, index=False)
+	temp.close()
+	mat=pd.read_csv('temp.txt', low_memory=False)
+	mat=mat.sort_values(by=['POS'])
 	return(mat)
+
 
 #function to return binary matrix adding new positions############################
 def unionposmatBIN(mat, reference, additionals_snps):
@@ -101,7 +106,6 @@ def additionalsIUPAC(mat, additional_snps):
 		additional_snp=additional_snp.sort_values(by=['refpos'])
 		newmatcol=pd.DataFrame(additional_snp.iloc[:,1])
 		newmatcol.columns=[name]
-
 		#check mat['POS']==additional_SNPS['refpos']### STILL TO DO###
 		mat=pd.concat([mat, newmatcol], axis=1)
 	return(mat)
@@ -134,7 +138,6 @@ def additionalsBIN(mat, additional_snps):
 		additional_snp=additional_snp.sort_values(by=['refpos'])
 		newmatcol=pd.DataFrame(additional_snp.iloc[:,2])
 		newmatcol.columns=[name]
-		
 		#check mat['POS']==additional_SNPS['refpos']### STILL TO DO####
 		mat=pd.concat([mat, newmatcol], axis=1)
 	return(mat)
@@ -166,16 +169,17 @@ args=parser.parse_args()
 
 ##pipeline execution###############################################################
 if args.out_type=='i':
-	outmat=unionposmatIUPAC(args.mat, args.reference, args.additional_snps)
+	outmatIUPAC=unionposmatIUPAC(args.mat, args.reference, args.additional_snps)
+	outmat=additionalsIUPAC(outmatIUPAC, additional_snps)
 	a.write(outmat)
 	a.close()
 
 
 if args.out_type=='b':
-	outmatbin=unionposmatBIN(args.matbin, args.reference, args.additional_snps)
-	additionals_BIN
+	outmatBIN=unionposmatBIN(args.matbin, args.reference, args.additional_snps)
+	outmat=additionalsBIN(outmatBIN, additional_snps)
 	b=open(args.out_prefix + 'mat.bin', 'w')
-	b.write(outmatbin)
+	b.write(outmat)
 	b.close()
 
 
