@@ -1,13 +1,85 @@
 #no explicit evolutionary model
 #no model of wothin host or macro evolution purely a distance based metric- incoprorates natural selection?
+library(data.table)
+library(reshape2)
+
+readMat<-function(mat)
+{
+	mat<-as.data.frame(fread(mat, header=T))
+	return(mat)
+}
+
+getDistance<-function(mat)
+{
+	dists<-dist(t(mat[, -c(1,2,3,4)]), method='manhattan')
+	df<-melt(as.matrix(dists), varnames=c('row','col'))
+	return(dist)
+}
+
+readDistance<-function(dist)
+{
+	dist<-read.table(dist, header=T)
+	return(dist)
+}
 
 
-input: mat, distance cutoff, cluster size cutoff if binary
+#function to return cluster table of cluster size and character vector of sample names from distance table
+getClusters<-function(distance_table, distance_cutoff)
+{
+	pairs<-distance_table[which(distance_table[,3]<distance_cutoff),]
+	remove_row<-c()
+	count<-0
+	for(row in 1:nrow(pairs))
+	{
+		if(as.character(pairs[row, 1]==as.character(pairs[row, 2])))
+		{
+			count<-count+1
+			remove_row[count]<-row
+		}
+	}
+	pairs<-pairs[-remove_row,]
+	unique<-levels(as.factor(c(as.character(pairs[,1]), as.character(pairs[,2]))))
+	cluster_size<-c()
+	cluster_col<-c()
+	for(u in 1:length(unique))
+	{
+		primary=unique[u]
+		related_1<-pairs[which(pairs[,1]==primary),2] 
+		related_2<-pairs[which(pairs[,2]==primary),1]
+		related<-c(as.character(related_1), as.character(related_2))
+		related<-levels(as.factor(related))
+		cluster<-levels(as.factor(c(as.character(primary), as.character(related))))
+		cluster_col[u]<-as.character(paste(as.character(cluster),collapse=','))
+		cluster_size[u]<-length(cluster)
+	} 
+	df<-as.data.frame(cbind(cluster_col, cluster_size))
+	df[!duplicated(df),]
 
-getDistance()
+}
 
+#function to return phenotype data of all sample names and binary or numeric cluster phenotype
+getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype=0)
+{
+	clusters<-cluster_table[which(as.numeric(cluster_table$cluster_size)>cluster_size_cutoff),]
+	df<-data.frame()
+	for(i in 1:nrow(clusters))
+	{
+		samples<-unlist(strsplit(as.character(clusters$cluster_col[i]), split=','))
+		newrows<-cbind(Sample=c(unlist(samples)), Phenotype=rep(as.numeric(clusters$cluster_size[i]), length=length(samples)))
+		df<-rbind(df, newrows)
+	}
 
-getClusters(distance matrix, distance cutoff)
+	othersamples<-colnames(mat)[is.na(match(df$Sample,colnames(mat)))]
+	newrows<-cbind(Sample=othersamples, Phenotype=rep(null_phenotype,length(othersamples)))
+	alldf<-rbind(df, newrows)
+	alldf<-df[sort(as.character(df$Sample)),]
+	return(alldf)
+}
 
+#################################################################################################################################
+mat<-readmat(matbin)
+distance_table<-getDistance(mat)
+cluster_table<-getClusters(distance_table, distance_cutoff)
+phenotype_table<-getPhenotype(mat, cluster_table, cluster_size_cutoff)
 
-getPhenotype()
+#################################################################################################################################
