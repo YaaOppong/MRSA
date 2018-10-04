@@ -15,7 +15,7 @@ readMat<-function(mat)
 readsnps<-function(snps)
 {
 	m<-read.table(snps)
-	m<-m[,c(mat$refpos,mat$alt]
+	m<-m[,c(mat$refpos,mat$alt)]
 	return(m)
 }
 #function to return union of postions from IUPAC matrix and additional genomes####
@@ -39,17 +39,14 @@ iterateunionpos<-function(mat, additional_snps)
 	}
 	union<-sort(unique(union))
 	return(union)
-	}
 }
 #function to generate new IUPAC row for monomorphic snps##########################
 
 lookupnewrowIUPAC<-function(mat, reference, pos)
 {
-	ref<-#reference.seq[pos]
-	alt<-'NaN'
+	ref<-reference[1][pos]
+	alt<-'Na'
 	newrow<-c(pos, ref, alt, 'SNP', rep(ref, (len(mat.columns) - 4)))
-	#newrow<-pd.DataFrame(newrow)
-	#newrow<-newrow.transpose()
 	return(newrow)
 }
 
@@ -57,10 +54,8 @@ lookupnewrowIUPAC<-function(mat, reference, pos)
 lookupnewrowBIN<-function(mat, reference, pos)
 {
 	ref=#reference.seq[pos]
-	alt='NaN'
+	alt='Na'
 	newrow=c(pos, ref, alt, 'SNP', rep(0, (len(mat.columns) - 4)))
-	#newrow=pd.DataFrame(newrow)
-	#newrow=newrow.transpose()
 	return(newrow)
 }
 
@@ -68,17 +63,20 @@ lookupnewrowBIN<-function(mat, reference, pos)
 unionposmatIUPAC<-function(mat, reference, additionals_snps)
 {
 	mat<-readMat(mat)
-	reference<-#Bio.SeqIO.read(reference, 'fasta')
+	reference<-read.fasta(reference)
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat[,mat$POS]
-	newpos<-#set(unionp).difference(set(mpos))
+	newpos<-unionp[is.na(match(mpos, unionp))]
 	temp<-'temp.txt'
-	#mat.to_csv(temp, mode='w', index=False)
-	for pos in newpos:
+	write.table(mat, temp, append=TRUE, quote=F, row.name=F, col.name=T)
+	for(pos in 1:length(newpos))
+	{
 		newrow<-lookupnewrowIUPAC(mat, reference, pos)
 		write.table(newrow, temp, append=TRUE, col.name=False, row.name=False, quote=F)
+	}
 	mat<-read.table('temp.txt', header=T)
 	mat<-sortmat[,mat$POS]
+	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=T, row.name=F, quote=F)
 	return(mat)
 }
 
@@ -86,17 +84,20 @@ unionposmatIUPAC<-function(mat, reference, additionals_snps)
 unionposmatBIN<-function(mat, reference, additionals_snps)
 {
 	mat<-readMat(mat)
-	reference<-#Bio.SeqIO.read(reference, 'fasta')
+	reference<-read.fasta(reference)
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat['POS']
-	newpos<-#set(unionp).difference(set(mpos))
+	newpos<-unionp[is.na(match(mpos, unionp))]
 	temp<-'temp.txt'
-	#mat.to_csv(temp, mode='w', index=False)
-	for pos in newpos:
+	write.table(mat, temp, append=TRUE, quote=F, row.name=F, col.name=T)
+	for(pos in 1:length(newpos))
+	{
 		newrow<-lookupnewrowIUPAC(mat, reference, pos)
 		write.table(newrow, temp, append=TRUE, col.name=False, row.name=False, quote=F)
+	}
 	mat<-read.table('temp.txt', header=T)
 	mat<-sort(mat[,mat$POS])
+	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=T, row.name=F, quote=F)
 	return(mat)
 }
 
@@ -221,4 +222,11 @@ unionposmatBIN<-function(mat, reference, additionals_snps)
 #	matfasta(args.outmat, args.out_prefix + '.fasta')
 
 ##################################################################################
-##################################################################################
+##############	outmatIUPAC=unionposmatIUPAC(args.mat, args.reference, args.additional_snps)
+outmatBIN=unionposmatBIN(matbin, reference, additional_snps)
+outmat=additionalsIUPAC(outmatIUPAC, additional_snps)
+
+#####################################################################
+matbin='TW20_minDP10.mat.bin'
+reference='TW20.fasta'
+additional_snps=c('references/BX_refpos_ref_alt.txt','references/ST22_refpos_ref_alt.txt','references/SE_refpos_ref_alt.txt')
