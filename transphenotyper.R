@@ -22,11 +22,10 @@ readDistance<-function(dist)
 	return(dist)
 }
 
-
 #function to return cluster table of cluster size and character vector of sample names from distance table
 getClusters<-function(distance_table, distance_cutoff)
 {
-	pairs<-distance_table[which(distance_table[,3]<distance_cutoff),]
+	pairs<-distance_table[which(distance_table[,3]<=distance_cutoff),]
 	remove_row<-c()
 	count<-0
 	for(row in 1:nrow(pairs))
@@ -60,7 +59,7 @@ getClusters<-function(distance_table, distance_cutoff)
 #function to return phenotype data of all sample names and binary or numeric cluster phenotype
 getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype=0)
 {
-	clusters<-cluster_table[which(as.numeric(cluster_table$cluster_size)>cluster_size_cutoff),]
+	clusters<-cluster_table[which(as.numeric(cluster_table$cluster_size)>=cluster_size_cutoff),]
 	df<-data.frame()
 	for(i in 1:nrow(clusters))
 	{
@@ -77,9 +76,18 @@ getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype
 }
 
 #################################################################################################################################
-mat<-readmat(matbin)
+##example##
+matbin<-'TW20_minDP10.mat.bin'
+distance_cutoff<-10
+cluster_size_cutoff<-2
+out<-'TW20_DC10_CC2.txt'
+
+#################################################################################################################################
+
+mat<-readMat(matbin)
 distance_table<-getDistance(mat)
 cluster_table<-getClusters(distance_table, distance_cutoff)
 phenotype_table<-getPhenotype(mat, cluster_table, cluster_size_cutoff)
+write.table(phenotype_table, out, col.name=T, row.name=F, quote=F)
 
 #################################################################################################################################
