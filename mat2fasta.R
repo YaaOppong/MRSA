@@ -14,15 +14,15 @@ readMat<-function(mat)
 
 readsnps<-function(snps)
 {
-	m<-read.table(snps)
-	m<-m[,c(mat$refpos,mat$alt)]
+	m<-read.table(snps, header=T)
+	m<-cbind(refpos=m$refpos,alt=as.character(m$alt))
 	return(m)
 }
 #function to return union of postions from IUPAC matrix and additional genomes####
 
 unionpos<-function(mat, nucmersnps)
 {
-	matpos<-mat[,mat$POS]
+	matpos<-mat$POS
 	nucmersnpspos=nucmersnps[,1]
 	union=sort(unique(c(matpos,nucmersnpspos)))
 	return(union)
@@ -34,7 +34,7 @@ iterateunionpos<-function(mat, additional_snps)
 	union=c()
 	for(additional_snp in 1:length(additional_snps))
 	{
-		additional_snp<-readsnps(additional_snp)
+		additional_snp<-readsnps(additional_snps[additional_snp])
 		union<-c(union,unionpos(mat, additional_snp))
 	}
 	union<-sort(unique(union))
@@ -44,18 +44,18 @@ iterateunionpos<-function(mat, additional_snps)
 
 lookupnewrowIUPAC<-function(mat, reference, pos)
 {
-	ref<-reference[1][pos]
+	ref<-reference[pos]
 	alt<-'Na'
-	newrow<-c(pos, ref, alt, 'SNP', rep(ref, (len(mat.columns) - 4)))
+	newrow<-c(pos, ref, alt, 'SNP', rep(ref, (length(colnames(mat)) - 4)))
 	return(newrow)
 }
 
 #function to generate new binary row for monomorphic snps#########################
 lookupnewrowBIN<-function(mat, reference, pos)
 {
-	ref=#reference.seq[pos]
-	alt='Na'
-	newrow=c(pos, ref, alt, 'SNP', rep(0, (len(mat.columns) - 4)))
+	ref<-reference[pos]
+	alt<-'Na'
+	newrow<-c(pos, ref, alt, 'SNP', rep(0, (length(colnames(mat)) - 4)))
 	return(newrow)
 }
 
@@ -64,19 +64,20 @@ unionposmatIUPAC<-function(mat, reference, additionals_snps)
 {
 	mat<-readMat(mat)
 	reference<-read.fasta(reference)
+	reference<-strsplit(unlist(reference), '')[[1]]
 	unionp<-iterateunionpos(mat, additionals_snps)
-	mpos<-mat[,mat$POS]
+	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
 	temp<-'temp.txt'
-	write.table(mat, temp, append=TRUE, quote=F, row.name=F, col.name=T)
+	write.table(mat, temp, append=TRUE, quote=FALSE, row.name=FALSE, col.name=TRUE)
 	for(pos in 1:length(newpos))
 	{
-		newrow<-lookupnewrowIUPAC(mat, reference, pos)
-		write.table(newrow, temp, append=TRUE, col.name=False, row.name=False, quote=F)
+		newrow<-lookupnewrowBIN(mat, reference, pos)
+		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
-	mat<-read.table('temp.txt', header=T)
-	mat<-sortmat[,mat$POS]
-	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=T, row.name=F, quote=F)
+	mat<-read.table('temp.txt', header=TRUE)
+	mat<-mat[sort(mat$POS),]
+	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
 
@@ -85,19 +86,20 @@ unionposmatBIN<-function(mat, reference, additionals_snps)
 {
 	mat<-readMat(mat)
 	reference<-read.fasta(reference)
+	reference<-strsplit(unlist(reference), '')[[1]]
 	unionp<-iterateunionpos(mat, additionals_snps)
-	mpos<-mat['POS']
+	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
 	temp<-'temp.txt'
 	write.table(mat, temp, append=TRUE, quote=F, row.name=F, col.name=T)
 	for(pos in 1:length(newpos))
 	{
 		newrow<-lookupnewrowIUPAC(mat, reference, pos)
-		write.table(newrow, temp, append=TRUE, col.name=False, row.name=False, quote=F)
+		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
-	mat<-read.table('temp.txt', header=T)
-	mat<-sort(mat[,mat$POS])
-	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=T, row.name=F, quote=F)
+	mat<-read.table('temp.txt', header=TRUE)
+	mat<-mat[sort(mat$POS),]
+	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
 
