@@ -46,7 +46,7 @@ lookupnewrowIUPAC<-function(mat, reference, pos)
 {
 	ref<-reference[pos]
 	alt<-'Na'
-	newrow<-c(pos, ref, alt, 'SNP', rep(ref, (length(colnames(mat)) - 4)))
+	newrow<-as.vector(unlist(c(pos, ref, alt, 'SNP', rep(ref, (length(colnames(mat)) - 4)))))
 	return(newrow)
 }
 
@@ -55,7 +55,7 @@ lookupnewrowBIN<-function(mat, reference, pos)
 {
 	ref<-reference[pos]
 	alt<-'Na'
-	newrow<-c(pos, ref, alt, 'SNP', rep(0, (length(colnames(mat)) - 4)))
+	newrow<-as.vector(unlist(c(pos, ref, alt, 'SNP', rep(0, (length(colnames(mat)) - 4)))))
 	return(newrow)
 }
 
@@ -69,13 +69,13 @@ unionposmatIUPAC<-function(mat, reference, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
 	temp<-'tempBIN.txt'
-	write.table(mat, temp, append=TRUE, quote=FALSE, row.name=FALSE, col.name=TRUE)
+	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
 	for(pos in 1:length(newpos))
 	{
 		newrow<-lookupnewrowBIN(mat, reference, pos)
 		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
-	mat<-read.table('temp.txt', header=TRUE)
+	mat<-read.delim('tempBIN.txt', header=TRUE)
 	mat<-mat[sort(mat$POS),]
 	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
@@ -91,13 +91,13 @@ unionposmatBIN<-function(mat, reference, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
 	temp<-'tempIUPAC.txt'
-	write.table(mat, temp, append=TRUE, quote=F, row.name=F, col.name=T)
+	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
 	for(pos in 1:length(newpos))
 	{
 		newrow<-lookupnewrowIUPAC(mat, reference, pos)
 		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
-	mat<-read.table('temp.txt', header=TRUE)
+	mat<-read.delim('tempIUPAC.txt', header=TRUE)
 	mat<-mat[sort(mat$POS),]
 	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
