@@ -60,46 +60,48 @@ lookupnewrowBIN<-function(mat, reference, pos)
 }
 
 #function to return IUPAC matrix adding new positions#############################
-unionposmatIUPAC<-function(mat, reference, additionals_snps)
+unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 {
-	mat<-readMat(mat)
+	mat<-readMat(matfile)
 	reference<-read.fasta(reference)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
+	newpos<-unique(newpos)
 	temp<-'tempBIN.txt'
 	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
 	for(pos in 1:length(newpos))
 	{
-		newrow<-lookupnewrowBIN(mat, reference, pos)
+		newrow<-lookupnewrowBIN(mat, reference, newpos[pos])
 		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
 	mat<-read.delim('tempBIN.txt', header=TRUE)
 	mat<-mat[sort(mat$POS),]
-	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
+	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
 
 #function to return binary matrix adding new positions############################
-unionposmatBIN<-function(mat, reference, additionals_snps)
+unionposmatBIN<-function(matfile, reference, additionals_snps)
 {
-	mat<-readMat(mat)
+	mat<-readMat(matfile)
 	reference<-read.fasta(reference)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
+	newpos<-unique(newpos)
 	temp<-'tempIUPAC.txt'
 	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
 	for(pos in 1:length(newpos))
 	{
-		newrow<-lookupnewrowIUPAC(mat, reference, pos)
+		newrow<-lookupnewrowIUPAC(mat, reference, newpos[pos])
 		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
 	mat<-read.delim('tempIUPAC.txt', header=TRUE)
 	mat<-mat[sort(mat$POS),]
-	write.table(mat, paste(mat, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
+	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
 
