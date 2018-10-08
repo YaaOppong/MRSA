@@ -68,7 +68,7 @@ unionposmatIUPAC<-function(mat, reference, additionals_snps)
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
-	temp<-'temp.txt'
+	temp<-'tempBIN.txt'
 	write.table(mat, temp, append=TRUE, quote=FALSE, row.name=FALSE, col.name=TRUE)
 	for(pos in 1:length(newpos))
 	{
@@ -90,7 +90,7 @@ unionposmatBIN<-function(mat, reference, additionals_snps)
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(mpos, unionp))]
-	temp<-'temp.txt'
+	temp<-'tempIUPAC.txt'
 	write.table(mat, temp, append=TRUE, quote=F, row.name=F, col.name=T)
 	for(pos in 1:length(newpos))
 	{
