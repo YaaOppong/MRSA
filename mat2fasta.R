@@ -69,15 +69,22 @@ unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(unionp, mpos))]
 	newpos<-unique(newpos)
-	temp<-'tempBIN.txt'
-	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
+	#temp<-'tempBIN.txt'
+	#write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
+	matrix<-matrix(, nrow=length(newpos), ncol= ncol(mat))
+	df<-data.frame(matrix)
+	colnames(df)<-colnames(mat)
+	#headers<-colnames(mat)
 	for(i in 1:length(newpos))
 	{
 		newrow<-lookupnewrowIUPAC(mat, reference, as.numeric(newpos[i]))
-		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
+		df[i,]<-newrow
+		#write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
-	mat<-read.delim('tempBIN.txt', header=TRUE)
-	mat<-mat[sort(mat$POS),]
+	#mat<-read.delim('tempBIN.txt', header=TRUE)
+	#mat<-mat[sort(mat$POS),]
+	#colnames(mat)<-headers
+	mat<-df[sort(df$POS),]
 	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
@@ -90,17 +97,19 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat$POS
-	newpos<-unionp[is.na(match(mpos, unionp))]
+	newpos<-unionp[is.na(match(unionp, mpos))]
 	newpos<-unique(newpos)
-	temp<-'tempIUPAC.txt'
-	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
+	headers<-colnames(mat)
+	matrix<-matrix(, nrow=length(newpos), ncol= ncol(mat))
+	df<-data.frame(matrix)
+	colnames(df)<-colnames(mat)
 	for(i in 1:length(newpos))
 	{
 		newrow<-lookupnewrowBIN(mat, reference, as.numeric(newpos[i]))
-		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
+		df[i,]<-newrow
 	}
-	mat<-read.delim('tempIUPAC.txt', header=TRUE)
-	mat<-mat[sort(mat$POS),]
+	mat<-df[sort(df$POS),]
+	colnames(mat)<-headers
 	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
