@@ -45,7 +45,7 @@ iterateunionpos<-function(mat, additional_snps)
 lookupnewrowIUPAC<-function(mat, reference, pos)
 {
 	ref<-reference[pos]
-	alt<-'Na'
+	alt<-'NA'
 	newrow<-as.vector(unlist(c(pos, ref, alt, 'SNP', rep(ref, (length(colnames(mat)) - 4)))))
 	return(newrow)
 }
@@ -54,7 +54,7 @@ lookupnewrowIUPAC<-function(mat, reference, pos)
 lookupnewrowBIN<-function(mat, reference, pos)
 {
 	ref<-reference[pos]
-	alt<-'Na'
+	alt<-'NA'
 	newrow<-as.vector(unlist(c(pos, ref, alt, 'SNP', rep(0, (length(colnames(mat)) - 4)))))
 	return(newrow)
 }
@@ -63,17 +63,17 @@ lookupnewrowBIN<-function(mat, reference, pos)
 unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 {
 	mat<-readMat(matfile)
-	reference<-read.fasta(reference)
+	reference<-read.fasta(reference, seqonly=TRUE)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat$POS
-	newpos<-unionp[is.na(match(mpos, unionp))]
+	newpos<-unionp[is.na(match(unionp, mpos))]
 	newpos<-unique(newpos)
 	temp<-'tempBIN.txt'
 	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
-	for(pos in 1:length(newpos))
+	for(i in 1:length(newpos))
 	{
-		newrow<-lookupnewrowBIN(mat, reference, newpos[pos])
+		newrow<-lookupnewrowIUPAC(mat, reference, as.numeric(newpos[i]))
 		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
 	mat<-read.delim('tempBIN.txt', header=TRUE)
@@ -86,7 +86,7 @@ unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 unionposmatBIN<-function(matfile, reference, additionals_snps)
 {
 	mat<-readMat(matfile)
-	reference<-read.fasta(reference)
+	reference<-read.fasta(reference, seqonly=TRUE)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	unionp<-iterateunionpos(mat, additionals_snps)
 	mpos<-mat$POS
@@ -94,9 +94,9 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 	newpos<-unique(newpos)
 	temp<-'tempIUPAC.txt'
 	write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
-	for(pos in 1:length(newpos))
+	for(i in 1:length(newpos))
 	{
-		newrow<-lookupnewrowIUPAC(mat, reference, newpos[pos])
+		newrow<-lookupnewrowBIN(mat, reference, as.numeric(newpos[i]))
 		write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
 	mat<-read.delim('tempIUPAC.txt', header=TRUE)
