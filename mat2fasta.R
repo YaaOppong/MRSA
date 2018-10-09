@@ -114,7 +114,81 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 	return(mat)
 }
 
+###following requires debugging
+addIsolatesIUPAC<-function(extended_mat, reference, additionals_snps)
+{
+	out<-paste(extended_mat, '.additionals', sep='')
+	mat<-readMat(extended_mat)
+	positions<-mat$POS
+	reference<-read.fasta(reference, seqonly=TRUE)
+	reference<-strsplit(unlist(reference), '')[[1]]
+	for(i in 1:length(additionals_snps))
+	{
+		name<-additionals_snps[i]
+		newisolate<-readsnps(additionals_snps[i])
+		missing_postions<-positions[is.na(match(positions, newisolate$refpos)]
+		newpositions<-c()
+		for(i in 1:length(missing_positions))
+		{
+			newpositions[i]<-missing_positions[i]
+			IUPACcol[i]<-reference[missing_positions[i]]
+		}
+		newposdf<-cbind(refpos=newpositions, alt=IUPACcol)
+		origposdf<-cbind(newisolate$refpos, newisolate$alt)
+		newdf<-rbind(newposdf, origposdf)
+		newdf<-newdf[sort(newdf$refpos),]
+		mat<-cbind(mat, name=newdf$alt)
+		colname(mat$name)<-name
+		write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
+	}
+}
 
+addIsolatesBIN<-function(extended_mat, additionals_snps)
+{
+	out<-paste(extended_mat, '.additionals', sep='')
+	mat<-readMat(extended_mat)
+	positions<-mat$POS
+	reference<-read.fasta(reference, seqonly=TRUE)
+	reference<-strsplit(unlist(reference), '')[[1]]
+	for(i in 1:length(additionals_snps))
+	{
+		name<-additionals_snps[i]
+		newisolate<-readsnps(additionals_snps[i])
+		missing_postions<-positions[is.na(match(positions, newisolate$refpos)]
+		newpositions<-c()
+		for(i in 1:length(missing_positions))
+		{
+			newpositions[i]<-missing_positions[i]
+			BINcol[i]<-0
+		}
+		newposdf<-cbind(refpos=newpositions, bin=BINcol)
+		origposdf<-cbind(newisolate$refpos, bin=rep(1,nrow(newisolate)))
+		newdf<-rbind(newposdf, origposdf)
+		newdf<-newdf[sort(newdf$refpos),]
+		mat<-cbind(mat, name=newdf$bin)
+		colname(mat$name)<-name
+		write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
+	}
+}
+
+addReferenceIUPAC<-function(mat, reference)
+{
+	out<-paste(mat, reference, sep='.')
+	mat<-readMat(extended_mat)
+	name<-reference
+	mat<-cbind(mat, name=mat$REF)))
+
+}
+
+addReferenceBIN<-function(mat, reference)
+{
+	out<-paste(mat, reference, sep='.')
+	mat<-readMat(extended_mat)
+	name<-reference
+	mat<-cbind(mat, name=rep(0, nrow(mat))))
+	colname(mat$name)<-name
+	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
+}
 
 #####BELOW REQUIRES DEBUGGING
 #functions to add snps to iupac and add new IUPAC to matrix as new column##########
@@ -236,10 +310,7 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 
 ##################################################################################
 ##############	outmatIUPAC=unionposmatIUPAC(args.mat, args.reference, args.additional_snps)
-outmatBIN=unionposmatBIN(matbin, reference, additional_snps)
-outmat=additionalsIUPAC(outmatIUPAC, additional_snps)
+#outmatBIN=unionposmatBIN(matbin, reference, additional_snps)
+#outmat=additionalsIUPAC(outmatIUPAC, additional_snps)
 
 #####################################################################
-matbin='TW20_minDP10.mat.bin'
-reference='TW20.fasta'
-additional_snps=c('references/BX_refpos_ref_alt.txt','references/ST22_refpos_ref_alt.txt','references/SE_refpos_ref_alt.txt')
