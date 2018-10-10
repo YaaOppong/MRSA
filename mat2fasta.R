@@ -108,7 +108,7 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 	return(mat)
 }
 
-###following requires debugging
+
 addIsolatesIUPAC<-function(extended_mat, reference, additionals_snps)
 {
 	out<-paste(extended_mat, '.additionals', sep='')
@@ -119,22 +119,23 @@ addIsolatesIUPAC<-function(extended_mat, reference, additionals_snps)
 	for(i in 1:length(additionals_snps))
 	{
 		name<-additionals_snps[i]
-		newisolate<-readsnps(additionals_snps[i])
-		missing_postions<-positions[is.na(match(positions, newisolate$refpos))]
+		newisolate<-as.data.frame(readsnps(additionals_snps[i]))
+		missing_positions<-positions[is.na(match(positions, newisolate$refpos))]
 		newpositions<-c()
-		for(i in 1:length(missing_positions))
+		IUPACcol<-c()
+		for(j in 1:length(missing_positions))
 		{
-			newpositions[i]<-missing_positions[i]
-			IUPACcol[i]<-reference[missing_positions[i]]
+			newpositions[j]<-missing_positions[j]
+			IUPACcol[j]<-reference[missing_positions[j]]
 		}
-		newposdf<-cbind(refpos=newpositions, alt=IUPACcol)
-		origposdf<-cbind(newisolate$refpos, newisolate$alt)
+		newposdf<-as.data.frame(cbind(refpos=as.vector(newpositions), alt=as.character(IUPACcol)))
+		origposdf<-as.data.frame(cbind(refpos=as.vector(newisolate$refpos), alt=as.character(newisolate$alt)))
 		newdf<-rbind(newposdf, origposdf)
-		newdf<-newdf[order(newdf$refpos),]
+		newdf<-newdf[order(as.numeric(as.character(newdf$refpos))),]
 		mat<-cbind(mat, name=newdf$alt)
-		colname(mat$name)<-name
-		write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
+		colnames(mat)[ncol(mat)]<-name
 	}
+	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 }
 
 addIsolatesBIN<-function(extended_mat, additionals_snps)
@@ -158,9 +159,9 @@ addIsolatesBIN<-function(extended_mat, additionals_snps)
 		newposdf<-cbind(refpos=newpositions, bin=BINcol)
 		origposdf<-cbind(newisolate$refpos, bin=rep(1,nrow(newisolate)))
 		newdf<-rbind(newposdf, origposdf)
-		newdf<-newdf[order(newdf$refpos),]
+		newdf<-newdf[order(as.numeric(as.character(newdf$refpos))),]
 		mat<-cbind(mat, name=newdf$bin)
-		colname(mat$name)<-name
+		colnames(mat)[ncol(mat)]<-name
 		write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 	}
 }
@@ -171,16 +172,18 @@ addReferenceIUPAC<-function(mat, reference)
 	mat<-readMat(extended_mat)
 	name<-reference
 	mat<-cbind(mat, name=mat$REF)
+	colnames(mat)[ncol(mat)]<-name
+	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 
 }
 
 addReferenceBIN<-function(mat, reference)
 {
 	out<-paste(mat, reference, sep='.')
-	mat<-readMat(extended_mat)
+	mat<-readMat(mat)
 	name<-reference
 	mat<-cbind(mat, name=rep(0, nrow(mat)))
-	colname(mat$name)<-name
+	colnames(mat)[ncol(mat)]<-name
 	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 }
 
