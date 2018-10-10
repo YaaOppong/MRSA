@@ -11,7 +11,6 @@ readMat<-function(mat)
 }
 
 #function to read file of additional genome- refpos, ref, alt####################################
-
 readsnps<-function(snps)
 {
 	m<-read.table(snps, header=T)
@@ -19,7 +18,6 @@ readsnps<-function(snps)
 	return(m)
 }
 #function to return union of postions from IUPAC matrix and additional genomes###################
-
 unionpos<-function(mat, nucmersnps)
 {
 	matpos<-mat$POS
@@ -27,8 +25,8 @@ unionpos<-function(mat, nucmersnps)
 	union=sort(unique(c(matpos,nucmersnpspos)))
 	return(union)
 }
-#iterate unionpos over multiple additional genomes (snps only)###################################
 
+#iterate unionpos over multiple additional genomes (snps only)###################################
 iterateunionpos<-function(mat, additional_snps)
 {
 	union=c()
@@ -40,8 +38,8 @@ iterateunionpos<-function(mat, additional_snps)
 	union<-sort(unique(union))
 	return(union)
 }
-#function to generate new IUPAC row for monomorphic snps#########################################
 
+#function to generate new IUPAC row for monomorphic snps#########################################
 lookupnewrowIUPAC<-function(mat, reference, pos)
 {
 	ref<-reference[pos]
@@ -59,7 +57,7 @@ lookupnewrowBIN<-function(mat, reference, pos)
 	return(newrow)
 }
 
-
+#add refernce isolate to IUPAC matrix using REF column
 addReferenceIUPAC<-function(mat, reference)
 {
 	out<-paste(mat, reference, sep='.')
@@ -72,6 +70,7 @@ addReferenceIUPAC<-function(mat, reference)
 
 }
 
+#add refernce isolate to bin matrix using REF column
 addReferenceBIN<-function(mat, reference)
 {
 	out<-paste(mat, reference, sep='.')
@@ -83,9 +82,20 @@ addReferenceBIN<-function(mat, reference)
 	#write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 }
 
+#merge matrices with same columns but differing positions together
+mergeMats<-function(mat1, mat2, out)
+{
+	m1<-readMat(mat1)
+	m2<-readMat(mat2)
+	m<-rbind(m1, m2)
+	new<-m[order(m$POS),]
+	dim(new)
+	new[1:20,1:20]
+	write.table(new, out, quote=F, row.name=F, col.name=T)
+}
 
 ##########################################################################################################
-#function to return IUPAC matrix adding new positions#############################
+#function to return IUPAC matrix adding new positions#####################################################
 unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 {
 	mat<-readMat(matfile)
@@ -102,7 +112,6 @@ unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 	{
 		newrow<-lookupnewrowIUPAC(mat, reference, as.numeric(newpos[i]))
 		df[i,]<-newrow
-		#write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
 	mat<-rbind(mat, df)
 	mat<-df[order(df$POS),]
@@ -136,18 +145,18 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 	return(mat)
 }
 
-
+#add isolates to IUPAC matrix containing all reference positions plus more
 addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_reference=TRUE)
 {
 	out<-paste(extended_mat, '.additionals', sep='')
 	mat<-readMat(extended_mat)
-	positions<-mat$POS
 	reference<-read.fasta(reference_file, seqonly=TRUE)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	for(i in 1:length(additionals_snps))
 	{
 		name<-additionals_snps[i]
 		newisolate<-as.data.frame(readsnps(additionals_snps[i]))
+		positions<-mat$POS
 		missing_positions<-positions[is.na(match(positions, newisolate$refpos))]
 		newpositions<-c()
 		IUPACcol<-c()
@@ -170,26 +179,28 @@ addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_r
 	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 }
 
+#add isolates to bin matrix containing all reference positions plus more
 addIsolatesBIN<-function(extended_mat,reference_file, additionals_snps, add_reference=TRUE)
 {
 	out<-paste(extended_mat, '.additionals', sep='')
 	mat<-readMat(extended_mat)
-	positions<-mat$POS
 	reference<-read.fasta(reference_file, seqonly=TRUE)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	for(i in 1:length(additionals_snps))
 	{
 		name<-additionals_snps[i]
-		newisolate<-readsnps(additionals_snps[i])
-		missing_postions<-positions[is.na(match(positions, newisolate$refpos))]
+		newisolate<-as.data.frame(readsnps(additionals_snps[i]))
+		positions<-mat$POS
+		missing_positions<-positions[is.na(match(positions, newisolate$refpos))]
 		newpositions<-c()
+		BINcol<-c()
 		for(i in 1:length(missing_positions))
 		{
 			newpositions[i]<-missing_positions[i]
 			BINcol[i]<-0
 		}
-		newposdf<-cbind(refpos=newpositions, bin=BINcol)
-		origposdf<-cbind(newisolate$refpos, bin=rep(1,nrow(newisolate)))
+		newposdf<-as.data.frame(cbind(refpos=as.vector(newpositions), alt=as.character(BINcol)))
+		origposdf<-as.data.frame(cbind(refpos=as.vector(newisolate$refpos), alt=as.character(newisolate$alt)))
 		newdf<-rbind(newposdf, origposdf)
 		newdf<-newdf[order(as.numeric(as.character(newdf$refpos))),]
 		mat<-cbind(mat, name=newdf$bin)
@@ -203,3 +214,33 @@ addIsolatesBIN<-function(extended_mat,reference_file, additionals_snps, add_refe
 }
 
 ###########################################################################################################
+#add isolates to IUPAC matrix containing all reference positions plus more using reference not nucmer files
+addIsolatesRefIUPAC<-function(extended_mat, reference_file, additionals_references, add_reference=TRUE)
+{
+	out<-paste(extended_mat, '.additionals', sep='')
+	mat<-readMat(extended_mat)
+	reference<-read.fasta(reference_file, seqonly=TRUE)
+	reference<-strsplit(unlist(reference), '')[[1]]
+	for(i in 1:length(additionals_references))
+	{
+		name<-additionals_references[i]
+		reference_file<-additionals_references[i]
+		newisolate<-read.fasta(reference_file, seqonly=TRUE)
+		reference<-strsplit(unlist(reference), '')[[1]]
+		positions<-mat$POS
+		newcol<-c()
+		for(j in 1:length(positions))
+		{
+			pos<-positions[j]
+			newcol[j]<-reference[pos]
+		}
+		mat<-cbind(mat, newcol)
+		colnames(mat)[ncol(mat)]<-name
+	}
+	if(add_reference==TRUE)
+	{
+		mat<-addReferenceIUPAC(mat, reference_file)
+	}
+	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
+}
+
