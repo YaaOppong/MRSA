@@ -69,22 +69,16 @@ unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 	mpos<-mat$POS
 	newpos<-unionp[is.na(match(unionp, mpos))]
 	newpos<-unique(newpos)
-	#temp<-'tempBIN.txt'
-	#write.table(mat, temp, quote=FALSE, row.name=FALSE, col.name=TRUE)
 	matrix<-matrix(, nrow=length(newpos), ncol= ncol(mat))
 	df<-data.frame(matrix)
 	colnames(df)<-colnames(mat)
-	#headers<-colnames(mat)
 	for(i in 1:length(newpos))
 	{
 		newrow<-lookupnewrowIUPAC(mat, reference, as.numeric(newpos[i]))
 		df[i,]<-newrow
 		#write.table(newrow, temp, append=TRUE, col.name=FALSE, row.name=FALSE, quote=FALSE)
 	}
-	#mat<-read.delim('tempBIN.txt', header=TRUE)
-	#mat<-mat[sort(mat$POS),]
-	#colnames(mat)<-headers
-	mat<-df[sort(df$POS),]
+	mat<-df[order(df$POS),]
 	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
@@ -108,7 +102,7 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 		newrow<-lookupnewrowBIN(mat, reference, as.numeric(newpos[i]))
 		df[i,]<-newrow
 	}
-	mat<-df[sort(df$POS),]
+	mat<-df[order(df$POS),]
 	colnames(mat)<-headers
 	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
@@ -126,7 +120,7 @@ addIsolatesIUPAC<-function(extended_mat, reference, additionals_snps)
 	{
 		name<-additionals_snps[i]
 		newisolate<-readsnps(additionals_snps[i])
-		missing_postions<-positions[is.na(match(positions, newisolate$refpos)]
+		missing_postions<-positions[is.na(match(positions, newisolate$refpos))]
 		newpositions<-c()
 		for(i in 1:length(missing_positions))
 		{
@@ -136,7 +130,7 @@ addIsolatesIUPAC<-function(extended_mat, reference, additionals_snps)
 		newposdf<-cbind(refpos=newpositions, alt=IUPACcol)
 		origposdf<-cbind(newisolate$refpos, newisolate$alt)
 		newdf<-rbind(newposdf, origposdf)
-		newdf<-newdf[sort(newdf$refpos),]
+		newdf<-newdf[order(newdf$refpos),]
 		mat<-cbind(mat, name=newdf$alt)
 		colname(mat$name)<-name
 		write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
@@ -154,7 +148,7 @@ addIsolatesBIN<-function(extended_mat, additionals_snps)
 	{
 		name<-additionals_snps[i]
 		newisolate<-readsnps(additionals_snps[i])
-		missing_postions<-positions[is.na(match(positions, newisolate$refpos)]
+		missing_postions<-positions[is.na(match(positions, newisolate$refpos))]
 		newpositions<-c()
 		for(i in 1:length(missing_positions))
 		{
@@ -164,7 +158,7 @@ addIsolatesBIN<-function(extended_mat, additionals_snps)
 		newposdf<-cbind(refpos=newpositions, bin=BINcol)
 		origposdf<-cbind(newisolate$refpos, bin=rep(1,nrow(newisolate)))
 		newdf<-rbind(newposdf, origposdf)
-		newdf<-newdf[sort(newdf$refpos),]
+		newdf<-newdf[order(newdf$refpos),]
 		mat<-cbind(mat, name=newdf$bin)
 		colname(mat$name)<-name
 		write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
@@ -176,7 +170,7 @@ addReferenceIUPAC<-function(mat, reference)
 	out<-paste(mat, reference, sep='.')
 	mat<-readMat(extended_mat)
 	name<-reference
-	mat<-cbind(mat, name=mat$REF)))
+	mat<-cbind(mat, name=mat$REF)
 
 }
 
@@ -185,7 +179,7 @@ addReferenceBIN<-function(mat, reference)
 	out<-paste(mat, reference, sep='.')
 	mat<-readMat(extended_mat)
 	name<-reference
-	mat<-cbind(mat, name=rep(0, nrow(mat))))
+	mat<-cbind(mat, name=rep(0, nrow(mat)))
 	colname(mat$name)<-name
 	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 }
