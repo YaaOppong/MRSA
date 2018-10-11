@@ -2,6 +2,14 @@
 library(data.table)
 library(seqinr)
 
+#preprocessing 
+getmat2fastainput<-function(nucmersnps, out_prefix)
+{
+	snps<-read.delim(nucmersnps, header=F)
+	snps2<-as.data.frame(cbind(refpos=as.character(snps[,1]), ref=as.character(snps[,2]), alt=as.character(snps[,3])))
+	#deal with duplicate positions?
+	write.table(snps2, paste(out_prefix, '_refpos_ref_alt.txt', sep=''), quote=F, row.name=F, col.name=T)
+}
 
 #functiom to read IUPAC matrix and store as data frame###########################################
 readMat<-function(mat)
@@ -61,7 +69,7 @@ lookupnewrowBIN<-function(mat, reference, pos)
 addReferenceIUPAC<-function(mat, reference)
 {
 	out<-paste(mat, reference, sep='.')
-	mat<-readMat(extended_mat)
+	#mat<-readMat(mat)
 	name<-reference
 	mat<-cbind(mat, name=mat$REF)
 	colnames(mat)[ncol(mat)]<-name
@@ -74,7 +82,7 @@ addReferenceIUPAC<-function(mat, reference)
 addReferenceBIN<-function(mat, reference)
 {
 	out<-paste(mat, reference, sep='.')
-	mat<-readMat(mat)
+	#mat<-readMat(mat)
 	name<-reference
 	mat<-cbind(mat, name=rep(0, nrow(mat)))
 	colnames(mat)[ncol(mat)]<-name
@@ -156,8 +164,10 @@ addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_r
 	{
 		name<-additionals_snps[i]
 		newisolate<-as.data.frame(readsnps(additionals_snps[i]))
+		#next step removes duplicated positions (presumably insertion positions)
+		newisolate<-newisolate[-which(duplicated(newisolate$refpos)==TRUE),]
 		positions<-mat$POS
-		missing_positions<-positions[is.na(match(positions, newisolate$refpos))]
+		missing_positions<-positions[(is.na(match(positions, newisolate$refpos)))]
 		newpositions<-c()
 		IUPACcol<-c()
 		for(j in 1:length(missing_positions))
@@ -213,34 +223,22 @@ addIsolatesBIN<-function(extended_mat,reference_file, additionals_snps, add_refe
 	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 }
 
-###########################################################################################################
-#add isolates to IUPAC matrix containing all reference positions plus more using reference not nucmer files
-addIsolatesRefIUPAC<-function(extended_mat, reference_file, additionals_references, add_reference=TRUE)
+
+IUPAC2fasta<-function(additionals_mat)
 {
-	out<-paste(extended_mat, '.additionals', sep='')
-	mat<-readMat(extended_mat)
-	reference<-read.fasta(reference_file, seqonly=TRUE)
-	reference<-strsplit(unlist(reference), '')[[1]]
-	for(i in 1:length(additionals_references))
+	mat<-readMat(additionals_mat)
+	mat_snp<-mat[which(mat$TYPE=='SNP'),]
+	out<-paste(additionals_mat, '.fasta', sep='')
+	for(i in 5:ncol(mat_snp))
 	{
-		name<-additionals_references[i]
-		reference_file<-additionals_references[i]
-		newisolate<-read.fasta(reference_file, seqonly=TRUE)
-		reference<-strsplit(unlist(reference), '')[[1]]
-		positions<-mat$POS
-		newcol<-c()
-		for(j in 1:length(positions))
-		{
-			pos<-positions[j]
-			newcol[j]<-reference[pos]
-		}
-		mat<-cbind(mat, newcol)
-		colnames(mat)[ncol(mat)]<-name
+		seq<-mat_snp[,i]
+		name<-colnames(mat_snp)[i]
+		write.fasta(seq,name, out, open='a')
 	}
-	if(add_reference==TRUE)
-	{
-		mat<-addReferenceIUPAC(mat, reference_file)
-	}
-	write.table(mat, out, col.name=TRUE, row.name=FALSE, quote=FALSE)
 }
 
+
+########################################################################################################################
+#### DECIDE AT WHICH POINT TO FILTER OUT INDELS FROM MAT- MAYBE NOT JUST AT LST FASTA GENERATION STEP?
+#### FIGURE OUT WHY THERE IS AN X IN THE FASTA FILES
+# write shell script to run nucmer to include in repository
