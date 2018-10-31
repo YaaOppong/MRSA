@@ -1,6 +1,7 @@
 #################################################################################################
 library(data.table)
 library(seqinr)
+library(phyclust)
 
 #preprocessing 
 getmat2fastainput<-function(nucmersnps, out_prefix)
@@ -234,6 +235,20 @@ IUPAC2fasta<-function(additionals_mat)
 		seq<-mat_snp[,i]
 		name<-colnames(mat_snp)[i]
 		write.fasta(seq,name, out, open='a')
+	}
+}
+
+#IUPAC matrix to relaxed phylip
+IUPAC2phylip<-function(additionals_mat)
+{
+	mat<-readMat(additionals_mat)
+	mat_snp<-mat[which(mat$TYPE=='SNP'),]
+	out<-paste(additionals_mat, '.phy', sep='')
+	for(i in 5:ncol(mat_snp))
+	{
+		seq<-mat_snp[,i]
+		name<-colnames(mat_snp)[i]
+		#write.phylip()
 	}
 }
 
