@@ -121,8 +121,8 @@ unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 		newrow<-lookupnewrowIUPAC(mat, reference, as.numeric(newpos[i]))
 		df[i,]<-newrow
 	}
-	mat<-rbind(mat, df)
-	mat<-df[order(df$POS),]
+	newmat<-rbind(mat, df)
+	newmat<-newmat[order(as.numeric(df$POS)),]
 	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
 }
@@ -147,7 +147,7 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 		df[i,]<-newrow
 	}
 	mat<-rbind(mat, df)
-	mat<-df[order(df$POS),]
+	mat<-mat[order(df$POS),]
 	colnames(mat)<-headers
 	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
