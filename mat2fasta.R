@@ -1,6 +1,7 @@
 #################################################################################################
 library(data.table)
 library(seqinr)
+library(phylotools)
 
 #preprocessing 
 getmat2fastainput<-function(nucmersnps, out_prefix)
@@ -236,6 +237,13 @@ IUPAC2fasta<-function(additionals_mat)
 		write.fasta(seq,name, out, open='a')
 	}
 }
+
+FASTA2phylip<-function(fasta_file)
+{
+	dat<-read.fasta(fasta_file)
+	dat2phylip(dat, paste(fasta_file, '.phy',sep=''))
+}
+	
 
 
 ########################################################################################################################
