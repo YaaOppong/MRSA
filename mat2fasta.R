@@ -2,6 +2,9 @@
 library(data.table)
 library(seqinr)
 library(phylotools)
+library('devtools')
+install_github("fmichonneau/chopper")
+library(chopper)
 
 #preprocessing 
 getmat2fastainput<-function(nucmersnps, out_prefix)
@@ -240,10 +243,8 @@ IUPAC2fasta<-function(additionals_mat)
 
 FASTA2phylip<-function(fasta_file)
 {
-	dat<-read.fasta(fasta_file)
-	dat2phylip(dat, paste(fasta_file, '.phy',sep=''))
+	fas2phy(fasta_file, format = "sequential")
 }
-	
 
 
 ########################################################################################################################
