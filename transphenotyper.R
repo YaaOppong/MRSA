@@ -68,10 +68,9 @@ getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype
 		df<-rbind(df, newrows)
 	}
 
-	othersamples<-colnames(mat)[is.na(match(df$Sample,colnames(mat)))]
+	othersamples<-colnames(mat)[is.na(match(colnames(mat), df$Sample))]
 	newrows<-cbind(Sample=othersamples, Phenotype=rep(null_phenotype,length(othersamples)))
 	alldf<-rbind(df, newrows)
-	alldf<-df[sort(as.character(df$Sample)),]
 	return(alldf)
 }
 
