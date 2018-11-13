@@ -74,6 +74,26 @@ getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype
 	return(alldf)
 }
 
+
+#################################################################################################################################
+####Distance cutoff against numebr of clusters##
+##could make a video visual using Jody's visualiser##
+plotClusterSize<-function(distance_table,  max_distance, bin_size, out)
+{
+	distances<-seq(from=1, to=max_distance, by=bin_size)
+	df<-matrix(data=NA, nrow=length(distances), ncol=2)
+	count=1
+	for i in 1:length(distances)
+	{
+		a<-get_clusters(distance_table, distances[i])
+		df[count,1]<-distances[i]
+		df[count,2]<-dim(a)[1]
+		count=count+1
+	}
+	jpeg(out)
+	plot(df[,2], df[,1], xlab='Distance Cutoff', ylab='Number of Clusters')
+	dev.off()
+}
 #################################################################################################################################
 ##example##
 matbin<-'TW20_minDP10.mat.bin'
