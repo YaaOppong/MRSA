@@ -78,7 +78,7 @@ getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype
 #################################################################################################################################
 ####Distance cutoff against numebr of clusters##
 ##could make a video visual using Jody's visualiser##
-plotClusterSize<-function(distance_table,  max_distance, bin_size, out)
+plotNumberClusters<-function(distance_table,  max_distance, bin_size, out)
 {
 	distances<-seq(from=1, to=max_distance, by=bin_size)
 	df<-matrix(data=NA, nrow=length(distances), ncol=2)
@@ -91,9 +91,27 @@ plotClusterSize<-function(distance_table,  max_distance, bin_size, out)
 		count=count+1
 	}
 	jpeg(out)
-	plot(df[,2], df[,1], xlab='Distance Cutoff', ylab='Number of Clusters')
+	plot(df[,1], df[,2], xlab='Distance Cutoff', ylab='Number of Clusters')
 	dev.off()
 }
+
+plotClusterSizeMedian<-function(distance_table,  max_distance, bin_size, out)
+{
+	distances<-seq(from=1, to=max_distance, by=bin_size)
+	df<-matrix(data=NA, nrow=length(distances), ncol=2)
+	count=1
+	for(i in 1:length(distances))
+	{
+		a<-getClusters(distance_table, distances[i])
+		df[count,1]<-distances[i]
+		df[count,2]<-median(as.numeric(a[,2]))
+		count=count+1
+	}
+	jpeg(out)
+	plot(df[,1], df[,2], xlab='Distance Cutoff', ylab='Median Cluster Size')
+	dev.off()
+}
+
 #################################################################################################################################
 ##example##
 matbin<-'TW20_minDP10.mat.bin'
