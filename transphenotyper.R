@@ -1,14 +1,14 @@
-#no explicit evolutionary model
-#no model of wothin host or macro evolution purely a distance based metric- incoprorates natural selection?
 library(data.table)
 library(reshape2)
 
+#read in variant matrix
 readMat<-function(mat)
 {
 	mat<-as.data.frame(fread(mat, header=T))
 	return(mat)
 }
 
+#perform distance calculation and return a distance table
 getDistance<-function(mat)
 {
 	dists<-dist(t(mat[, -c(1,2,3,4)]), method='manhattan')
@@ -16,13 +16,14 @@ getDistance<-function(mat)
 	return(dist)
 }
 
+#read distance table from file
 readDistance<-function(dist)
 {
 	dist<-read.table(dist, header=T)
 	return(dist)
 }
 
-#function to return cluster table of cluster size and character vector of sample names from distance table
+#return cluster table of cluster size and character vector of sample names from distance table
 getClusters<-function(distance_table, distance_cutoff)
 {
 	pairs<-distance_table[which(distance_table[,3]<=distance_cutoff),]
@@ -56,7 +57,7 @@ getClusters<-function(distance_table, distance_cutoff)
 
 }
 
-#function to return phenotype data of all sample names and binary or numeric cluster phenotype
+#return inferred cluster size phenotype data of all sample names
 getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype=0)
 {
 	clusters<-cluster_table[which(as.numeric(cluster_table$cluster_size)>=cluster_size_cutoff),]
@@ -76,11 +77,11 @@ getPhenotype<-function(mat, cluster_table, cluster_size_cutoff=2, null_phenotype
 
 
 #################################################################################################################################
-####Distance cutoff against numebr of clusters##
-##could make a video visual using Jody's visualiser##
-plotNumberClusters<-function(distance_table,  max_distance, bin_size, out)
+##could make a video? visual using Jody's visualiser##
+###plot number of clusters against distance cutoff
+plotNumberClusters<-function(distance_table,  max_distance, step_size, out)
 {
-	distances<-seq(from=1, to=max_distance, by=bin_size)
+	distances<-seq(from=1, to=max_distance, by=step_size)
 	df<-matrix(data=NA, nrow=length(distances), ncol=2)
 	count=1
 	for(i in 1:length(distances))
@@ -94,10 +95,10 @@ plotNumberClusters<-function(distance_table,  max_distance, bin_size, out)
 	plot(df[,1], df[,2], xlab='Distance Cutoff', ylab='Number of Clusters')
 	dev.off()
 }
-
-plotClusterSizeMedian<-function(distance_table,  max_distance, bin_size, out)
+##plot median cluster size against distance cutoff
+plotClusterSizeMedian<-function(distance_table,  max_distance, step_size, out)
 {
-	distances<-seq(from=1, to=max_distance, by=bin_size)
+	distances<-seq(from=1, to=max_distance, by=step_size)
 	df<-matrix(data=NA, nrow=length(distances), ncol=2)
 	count=1
 	for(i in 1:length(distances))
@@ -111,10 +112,10 @@ plotClusterSizeMedian<-function(distance_table,  max_distance, bin_size, out)
 	plot(df[,1], df[,2], xlab='Distance Cutoff', ylab='Median Cluster Size')
 	dev.off()
 }
-
-plotClusterSizeMean<-function(distance_table,  max_distance, bin_size, out)
+##plot mean cluster size against distance cutoff
+plotClusterSizeMean<-function(distance_table,  max_distance, step_size, out)
 {
-	distances<-seq(from=1, to=max_distance, by=bin_size)
+	distances<-seq(from=1, to=max_distance, by=step_size)
 	df<-matrix(data=NA, nrow=length(distances), ncol=2)
 	count=1
 	for(i in 1:length(distances))
@@ -132,17 +133,15 @@ plotClusterSizeMean<-function(distance_table,  max_distance, bin_size, out)
 
 #################################################################################################################################
 ##example##
-matbin<-'TW20_minDP10.mat.bin'
-distance_cutoff<-10
-cluster_size_cutoff<-2
-out<-'TW20_DC10_CC2.txt'
-
-#################################################################################################################################
+matbin<-'test.mat.bin'
 
 mat<-readMat(matbin)
 distance_table<-getDistance(mat)
-cluster_table<-getClusters(distance_table, distance_cutoff)
+cluster_table<-getClusters(distance_table, distance_cutoff=10)
 phenotype_table<-getPhenotype(mat, cluster_table, cluster_size_cutoff)
-write.table(phenotype_table, out, col.name=T, row.name=F, quote=F)
+write.table(phenotype_table, 'test.txt', col.name=T, row.name=F, quote=F)
+plotNumberClusters(distance_table,  max_distance=100, step_size=5, 'test_clusterplot.jpeg')
+plotClusterSizeMedian(distance_table,  max_distance=100, step_size=5, 'test_clusterplot_median.jpeg')
+plotClusterSizeMean(distance_table,  max_distance=100, step_size=5, 'test_clusterplot_mean.jpeg')
 
 #################################################################################################################################
