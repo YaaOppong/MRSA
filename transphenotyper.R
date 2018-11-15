@@ -112,6 +112,24 @@ plotClusterSizeMedian<-function(distance_table,  max_distance, bin_size, out)
 	dev.off()
 }
 
+plotClusterSizeMean<-function(distance_table,  max_distance, bin_size, out)
+{
+	distances<-seq(from=1, to=max_distance, by=bin_size)
+	df<-matrix(data=NA, nrow=length(distances), ncol=2)
+	count=1
+	for(i in 1:length(distances))
+	{
+		a<-getClusters(distance_table, distances[i])
+		df[count,1]<-distances[i]
+		df[count,2]<-mean(as.numeric(a[,2]))
+		count=count+1
+	}
+	jpeg(out)
+	plot(df[,1], df[,2], xlab='Distance Cutoff', ylab='Median Cluster Size')
+	dev.off()
+}
+
+
 #################################################################################################################################
 ##example##
 matbin<-'TW20_minDP10.mat.bin'
