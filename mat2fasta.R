@@ -121,10 +121,10 @@ unionposmatIUPAC<-function(matfile, reference, additionals_snps)
 		newrow<-lookupnewrowIUPAC(mat, reference, as.numeric(newpos[i]))
 		df[i,]<-newrow
 	}
-	newmat<-rbind(mat, df)
-	newmat<-newmat[order(as.numeric(newmat$POS)),]
-	write.table(newmat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
-	return(newmat)
+	mat<-rbind(mat, df)
+	mat<-df[order(df$POS),]
+	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
+	return(mat)
 }
 
 #function to return binary matrix adding new positions#####################################################
@@ -147,7 +147,7 @@ unionposmatBIN<-function(matfile, reference, additionals_snps)
 		df[i,]<-newrow
 	}
 	mat<-rbind(mat, df)
-	mat<-mat[order(df$POS),]
+	mat<-df[order(df$POS),]
 	colnames(mat)<-headers
 	write.table(mat, paste(matfile, 'extended.temp', sep='_'), col.name=TRUE, row.name=FALSE, quote=FALSE)
 	return(mat)
