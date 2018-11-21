@@ -165,7 +165,17 @@ addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_r
 		name<-additionals_snps[i]
 		newisolate<-as.data.frame(readsnps(additionals_snps[i]))
 		#next step removes duplicated positions (presumably insertion positions)
-		newisolate<-newisolate[-which(duplicated(newisolate$refpos)==TRUE),]
+		newisolate<-newisolate[which(duplicated(newisolate$refpos)==FALSE),]
+		#next step saves insertion positions so they can be filled with missing data 'N'
+		duplicated<-unique(newisolate$refpos[which(duplicated(newisolate$refpos)==TRUE)])
+		if(length(duplicated)>0)
+		{
+			print('This additional SNP file contains indels')
+			missing<-rep('N', length(duplicated))
+			missingrows<-cbind(duplicated,missing)
+			newisolate<-rbind(newisolate, missing)
+			newisolate<-newisolate[order(as.numeric(as.character(newisolate$refpos))),]
+		}
 		positions<-mat$POS
 		missing_positions<-positions[(is.na(match(positions, newisolate$refpos)))]
 		newpositions<-c()
@@ -190,6 +200,7 @@ addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_r
 }
 
 #add isolates to bin matrix containing all reference positions plus more
+#CHECK BELOW FOR INDEL ERRORS AS ABOVE############
 addIsolatesBIN<-function(extended_mat,reference_file, additionals_snps, add_reference=TRUE)
 {
 	out<-paste(extended_mat, '.additionals', sep='')
