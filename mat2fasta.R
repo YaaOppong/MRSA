@@ -11,15 +11,19 @@ getmat2fastainput<-function(nucmersnps, out_prefix)
 	duplicated<-unique(newisolate$refpos[which(duplicated(newisolate$refpos)==TRUE)])
 	if(length(duplicated)>0)
 	{
-		print(this nucmersnps file contains duplicate positions)	
+		print('this nucmersnps file contains duplicate positions')	
 	}
 	write.table(snps2, paste(out_prefix, '_refpos_ref_alt.txt', sep=''), quote=F, row.name=F, col.name=T)
 }
 
 #functiom to read IUPAC matrix and store as data frame###########################################
-readMat<-function(mat)
+readMat<-function(mat, indels=FALSE)
 {
 	mat<-as.data.frame(fread(mat, header=T))
+	if(indels==FALSE)
+	{
+		mat<-mat[which(mat$TYPE=='SNP'),]
+	}
 	return(mat)
 }
 
@@ -176,10 +180,10 @@ addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_r
 		if(length(duplicated)>0)
 		{
 			print('This additional SNP file contains indels')
-			missing<-rep('N', length(duplicated))
-			missingrows<-cbind(duplicated,missing)
-			newisolate<-rbind(newisolate, missing)
-			newisolate<-newisolate[order(as.numeric(as.character(newisolate$refpos))),]
+		#	missing<-rep('N', length(duplicated))
+		#	missingrows<-cbind(duplicated,missing)
+		#	newisolate<-rbind(newisolate, missing)
+		#	newisolate<-newisolate[order(as.numeric(as.character(newisolate$refpos))),]
 		}
 		positions<-mat$POS
 		missing_positions<-positions[(is.na(match(positions, newisolate$refpos)))]
