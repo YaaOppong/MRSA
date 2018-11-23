@@ -167,6 +167,10 @@ addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_r
 {
 	out<-paste(extended_mat, '.additionals', sep='')
 	mat<-readMat(extended_mat)
+	#remove duplicated position in mat
+	duplicated<-which(duplicated(mat[,1])==TRUE)
+	print(duplicated)
+	mat<-mat[-duplicated,]
 	reference<-read.fasta(reference_file, seqonly=TRUE)
 	reference<-strsplit(unlist(reference), '')[[1]]
 	for(i in 1:length(additionals_snps))
@@ -198,7 +202,7 @@ addIsolatesIUPAC<-function(extended_mat, reference_file, additionals_snps, add_r
 		origposdf<-as.data.frame(cbind(refpos=as.vector(newisolate$refpos), alt=as.character(newisolate$alt)))
 		newdf<-rbind(newposdf, origposdf)
 		newdf<-newdf[order(as.numeric(as.character(newdf$refpos))),]
-		mat<-cbind(mat, name=newdf$alt)
+		mat<-cbind(mat, newdf$alt)
 		colnames(mat)[ncol(mat)]<-name
 	}
 	if(add_reference==TRUE)
